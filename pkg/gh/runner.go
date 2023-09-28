@@ -34,6 +34,7 @@ func ExistGitHubRunnerWithRunner(runners []*github.Runner, runnerName string) (*
 // ListRunners get runners that registered repository or org
 func ListRunners(ctx context.Context, client *github.Client, owner, repo string) ([]*github.Runner, error) {
 	if cachedRs, found := responseCache.Get(getCacheKey(owner, repo)); found {
+		logger.Logf(true, "Used cached list of runners for %s/%s", owner, repo)
 		return cachedRs.([]*github.Runner), nil
 	}
 
@@ -44,7 +45,7 @@ func ListRunners(ctx context.Context, client *github.Client, owner, repo string)
 
 	var rs []*github.Runner
 	for {
-		logger.Logf(true, "get runners from GitHub, page: %d, now all runners: %d", opts.Page, len(rs))
+		logger.Logf(true, "get runners for %s/%s from GitHub, page: %d, now all runners: %d", owner, repo, opts.Page, len(rs))
 		runners, resp, err := listRunners(ctx, client, owner, repo, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list runners: %w", err)
@@ -59,7 +60,7 @@ func ListRunners(ctx context.Context, client *github.Client, owner, repo string)
 	}
 
 	responseCache.Set(getCacheKey(owner, repo), rs, 1*time.Second)
-	logger.Logf(true, "found %d runners in GitHub", len(rs))
+	logger.Logf(true, "found %d runners for %s/%s in GitHub", len(rs), owner, repo)
 
 	return rs, nil
 }
